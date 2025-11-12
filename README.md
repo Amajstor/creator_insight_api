@@ -4,8 +4,8 @@ A full-stack web application that analyzes YouTube channel metrics through a mod
 
 ## 🚀 Live Demo
 
-- **Dashboard**: [View Live Dashboard](https://your-username-streamlit-app.streamlit.app/)
-- **API**: [View API Documentation](https://your-api-name.up.railway.app/)
+- **Dashboard**: [View Live Dashboard](https://creator-insight-api.streamlit.app/)
+- **API**: [View API Documentation](https://web-production-a7a8.up.railway.app/)
 
 ## 📊 Features
 
