@@ -3,8 +3,7 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 from config import API_BASE_URL
-from datetime import datetime
-import time
+import os
 
 # Page configuration
 st.set_page_config(
@@ -45,19 +44,29 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
     }
+    .info-box {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 5px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 class CreatorDashboard:
     def __init__(self):
-        self.api_base_url = st.session_state.get('api_url', API_BASE_URL)
+        # Use the API_BASE_URL from config
+        self.api_base_url = API_BASE_URL
     
     def check_api_health(self):
         """Check if the API is running and healthy"""
         try:
-            response = requests.get(f"{self.api_base_url}/health", timeout=5)
+            # Add a timeout to avoid hanging
+            response = requests.get(f"{self.api_base_url}/health", timeout=10)
             return response.status_code == 200
-        except:
+        except requests.exceptions.RequestException as e:
+            st.sidebar.error(f"❌ API Connection Failed: {str(e)}")
             return False
     
     def fetch_creator_data(self, youtube_id):
@@ -259,52 +268,124 @@ def main():
     with st.sidebar:
         st.markdown("### ⚙️ Configuration")
         
-        api_url = st.text_input(
-            "API Base URL",
-            value="http://localhost:5000",
-            help="URL where your Creator Insight API is running"
-        )
-        st.session_state.api_url = api_url
-        dashboard.api_base_url = api_url
+        # Show current API URL being used
+        st.markdown(f"**API URL:** `{dashboard.api_base_url}`")
+        
+        # Allow manual override for local development
+        if not os.environ.get('STREAMLIT_SHARING') and not os.environ.get('IS_STREAMLIT_CLOUD'):
+            custom_api_url = st.text_input(
+                "Custom API URL (for local testing)",
+                value=dashboard.api_base_url,
+                help="Override the API URL for local testing"
+            )
+            if custom_api_url != dashboard.api_base_url:
+                dashboard.api_base_url = custom_api_url
+                st.rerun()
         
         # API health check
         st.markdown("---")
         st.markdown("### 🔧 API Status")
         if dashboard.check_api_health():
-            st.success("✅ API is running")
+            st.success("✅ API is running and connected")
         else:
-            st.error("❌ API is not running")
-            st.markdown("""
-            **To fix this:**
-            1. Open a new Command Prompt
-            2. Navigate to your project folder
-            3. Run: `venv\\Scripts\\activate`
-            4. Run: `python app.py`
-            5. Keep that window open!
-            """)
+            st.error("❌ Cannot connect to API")
+            
+            # Show different messages for local vs production
+            if os.environ.get('STREAMLIT_SHARING') or os.environ.get('IS_STREAMLIT_CLOUD'):
+                st.markdown("""
+                **Production Issue:**
+                - Make sure your Railway API is deployed and running
+                - Check that the API_BASE_URL environment variable is set correctly in Streamlit Cloud
+                - Verify your YouTube API key is valid in Railway
+                """)
+            else:
+                st.markdown("""
+                **Local Development Issue:**
+                1. Open a new Command Prompt
+                2. Run: `venv\\Scripts\\activate && python app.py`
+                3. Keep that window open!
+                4. Make sure the API URL above matches your local API
+                """)
         
         st.markdown("---")
         st.markdown("### 📝 How to Use")
         st.markdown("""
-        1. **Start the API** (see instructions above)
+        1. Ensure API status shows ✅ above
         2. Click 'Analyze Creator' to fetch data
         3. View insights and metrics in the main panel
         
-        The dashboard will automatically analyze the **Jenna Marbles** channel.
+        The dashboard will automatically analyze the **NBC** channel.
         """)
     
-    # Show warning if API isn't running
+    # Show connection status in main area
     if not dashboard.check_api_health():
-        st.markdown("""
-        <div class="warning-box">
-        <h3>⚠️ API Not Running</h3>
-        <p>Your Flask API needs to be started before you can use the dashboard.</p>
-        <p><strong>Quick fix:</strong> Open a new Command Prompt and run:</p>
-        <code>venv\\Scripts\\activate && python app.py</code>
-        <p>Then keep that window open and return here.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        return
+        if os.environ.get('STREAMLIT_SHARING') or os.environ.get('IS_STREAMLIT_CLOUD'):
+            st.markdown("""
+            <div class="error-box">
+            <h3>🚨 Production API Connection Failed</h3>
+            <p>Cannot connect to the Creator Insight API on Railway.</p>
+            <p><strong>Possible issues:</strong></p>
+            <ul>
+            <li>Railway API deployment may be down</li>
+            <li>YouTube API key may be invalid or exceeded quota</li>
+            <li>Network connectivity issue</li>
+            </ul>
+            <p>Check the Railway dashboard for deployment status and logs.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="warning-box">
+            <h3>⚠️ Local API Not Running</h3>
+            <p>Your Flask API needs to be started before you can use the dashboard.</p>
+            <p><strong>Quick fix:</strong> Open a new Command Prompt and run:</p>
+            <code>venv\\Scripts\\activate && python app.py</code>
+            <p>Then keep that window open and return here.</p>
+            <p><strong>Current API URL:</strong> <code>{}</code></p>
+            </div>
+            """.format(dashboard.api_base_url), unsafe_allow_html=True)
+        
+        # Show demo data option
+        if st.button("👀 Show Demo with Sample Data", type="secondary"):
+            st.info("Showing sample data for demonstration purposes")
+            
+            # Sample data for demo
+            sample_data = {
+                "status": "success",
+                "requested_youtube_id": "UC9gFih9rw0zNCK3ZtoKQQyA",
+                "youtube_data": {
+                    "channel_title": "NBC - SAMPLE DATA",
+                    "description": "This is sample data showing how the dashboard would look with real API data.",
+                    "subscriber_count": 19400000,
+                    "video_count": 250,
+                    "view_count": 1868223332
+                },
+                "summary": {
+                    "platforms": ["YouTube"],
+                    "total_videos": 250,
+                    "total_subscribers": 19400000
+                }
+            }
+            
+            # Display sample metrics and get the metrics dict
+            metrics = dashboard.display_metrics(sample_data)
+            
+            if metrics:
+                # Create charts in columns using the metrics
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    dashboard.create_engagement_chart(metrics)
+                
+                with col2:
+                    dashboard.create_subscriber_ratio_chart(metrics)
+            
+            # Channel information
+            dashboard.display_channel_info(sample_data)
+            
+            st.warning("🔧 This is sample data. Fix API connection to see real YouTube channel analytics!")
+        
+        return  # Stop execution here if API isn't running
     
     # Main content area - only shown when API is running
     st.markdown("### 🔍 Analyze Creator")
@@ -315,7 +396,7 @@ def main():
     with input_col:
         youtube_id = st.text_input(
             "YouTube Channel ID",
-            value="UC9gFih9rw0zNCK3ZtoKQQyA",  # Auto-filled with Jenna Marbles channel
+            value="UC9gFih9rw0zNCK3ZtoKQQyA",  # Auto-filled with NBC channel
             placeholder="Enter YouTube Channel ID",
             help="YouTube Channel ID to analyze",
             label_visibility="collapsed"
@@ -369,7 +450,7 @@ def main():
         st.markdown("---")
         st.markdown("### 👆 Get Started")
         st.markdown("""
-        Click **Analyze Creator** to see insights for the **Jenna Marbles** channel, or enter a different Channel ID above.
+        Click **Analyze Creator** to see insights for the **NBC** channel, or enter a different Channel ID above.
         
         You'll see:
         - 📊 **Channel metrics** (subscribers, videos, views)
