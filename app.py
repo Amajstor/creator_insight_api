@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
@@ -9,7 +8,7 @@ from datetime import datetime
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
 
 # Get API key from environment variable
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY')
