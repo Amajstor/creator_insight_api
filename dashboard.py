@@ -314,7 +314,7 @@ def main():
         2. Click 'Analyze Creator' to fetch data
         3. View insights and metrics in the main panel
         
-        The dashboard will automatically analyze the **NBC** channel.
+        The dashboard will automatically analyze the **Jenna Marbles** channel.
         """)
     
     # Show connection status in main area
@@ -396,7 +396,7 @@ def main():
     with input_col:
         youtube_id = st.text_input(
             "YouTube Channel ID",
-            value="UC9gFih9rw0zNCK3ZtoKQQyA",  # Auto-filled with NBC channel
+            value="UC9gFih9rw0zNCK3ZtoKQQyA",  # Auto-filled with Jenna Marbles channel
             placeholder="Enter YouTube Channel ID",
             help="YouTube Channel ID to analyze",
             label_visibility="collapsed"
@@ -450,7 +450,7 @@ def main():
         st.markdown("---")
         st.markdown("### 👆 Get Started")
         st.markdown("""
-        Click **Analyze Creator** to see insights for the **NBC** channel, or enter a different Channel ID above.
+        Click **Analyze Creator** to see insights for the **Jenna Marbles** channel, or enter a different Channel ID above.
         
         You'll see:
         - 📊 **Channel metrics** (subscribers, videos, views)
